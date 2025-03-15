@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from fastapi import FastAPI
-from app.api.routes import router
+from app.api import routers,auth,users
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client["sahiplendirme"]
@@ -8,7 +8,10 @@ ilanlar_collection = db["ilanlar"]
 
 app = FastAPI()
 
-app.include_router(router)
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(users.router, prefix="/api/users", tags=["Kullanıcılar"])
+app.include_router(routers.router, prefix="/api/routes", tags=["İlanlar"])
+
 
 @app.get("/")
 async def root():
