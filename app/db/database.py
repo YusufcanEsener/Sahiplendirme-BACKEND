@@ -9,6 +9,7 @@ MONGO_URL = "mongodb://localhost:27017/"
 DB_NAME = "sahiplendirme"
 COLLECTION_NAME = "ilanlar"
 COUNTER_COLLECTION_NAME = "counters"
+USER_COLLECTION_NAME = "users"
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -29,19 +30,20 @@ try:
     
     print("MongoDB bağlantısı başarıyla kuruldu!")
     print(f"Veritabanı: {DB_NAME}")
-    print(f"Koleksiyon: {COLLECTION_NAME}")
+    print(f"Koleksiyonlar: {COLLECTION_NAME}, {USER_COLLECTION_NAME}")
     
     # Veritabanı ve koleksiyonu tanımlama
     db = client[DB_NAME]
     ilanlar_collection = db[COLLECTION_NAME]
     counters_collection = db[COUNTER_COLLECTION_NAME]
+    users_collection = db[USER_COLLECTION_NAME]
     
     # Mevcut indeksleri kontrol et ve temizle
     try:
         ilanlar_collection.drop_index("ilan_no_1")
-        print("Mevcut indeks temizlendi.")
+        print("Mevcut ilan indeksi temizlendi.")
     except Exception:
-        print("Mevcut indeks bulunamadı.")
+        print("Mevcut ilan indeksi bulunamadı.")
     
     # Mevcut verileri kontrol et ve düzenle
     # İlan_no değeri olmayan belgeler için ilan_no ekle
@@ -84,17 +86,22 @@ try:
             {"$set": {"seq": highest_ilan_no}}
         )
     
-    # Şimdi unique indeksi oluştur
-    print("Yeni unique indeks oluşturuluyor...")
+    # İlanlar için unique indeksi oluştur
+    print("Yeni ilan unique indeksi oluşturuluyor...")
     ilanlar_collection.create_index("ilan_no", unique=True)
-    print("Unique indeks başarıyla oluşturuldu.")
+    print("İlan unique indeksi başarıyla oluşturuldu.")
+    
+    # Kullanıcılar için email unique indeksi oluştur
+    print("Kullanıcılar için email unique indeksi oluşturuluyor...")
+    users_collection.create_index("email", unique=True)
+    print("Kullanıcı email indeksi başarıyla oluşturuldu.")
     
 except ConnectionFailure as e:
     print(f"MongoDB bağlantısı kurulamadı: {e}", file=sys.stderr)
     sys.exit(1)
 except DuplicateKeyError as e:
     print(f"Duplicate key hatası: {e}", file=sys.stderr)
-    print("Mevcut ilan_no değerlerinde çakışma var, veritabanı temizlenmeli.", file=sys.stderr)
+    print("Mevcut değerlerde çakışma var, veritabanı temizlenmeli.", file=sys.stderr)
     sys.exit(1)
 except Exception as e:
     print(f"Beklenmeyen bir hata oluştu: {e}", file=sys.stderr)
